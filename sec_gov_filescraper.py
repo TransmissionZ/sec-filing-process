@@ -8,7 +8,7 @@ INPUT_FOLDER_NAME = "CIK"
 
 # other inputs, should be the same
 INPUT_DATABASE_NAME = "SecFileDatabase.db"
-INPUT_BATCH_SIZE = 50 # how many parallel downloads
+INPUT_BATCH_SIZE = 20 # how many parallel downloads
 
 
 # install: requests, lxml, openpyxl
@@ -205,7 +205,7 @@ class Scraper:
                         else:
                             print("Couldn't add a listing at", current_url)
 
-                    print("Scraped page", current_page, "at", code_to_scrape["cikint"], "(", code_index+1, "/", len(self.codes_to_scrape), ")")
+                    # print("Scraped page", current_page, "at", code_to_scrape["cikint"], "(", code_index+1, "/", len(self.codes_to_scrape), ")")
                     # try to find next page
                     next_page_el = tree.xpath("//input[@type='button' and contains(@value, 'Next') and @onclick]")
                     if len(next_page_el) == 0:
