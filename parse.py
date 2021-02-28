@@ -8,7 +8,7 @@ from lxml import etree
 from io import StringIO
 from bs4 import BeautifulSoup as soup
 import csv
-
+import openpyxl
 
 
 class Parser:
@@ -25,26 +25,43 @@ class Parser:
 
     def parse(self):
         c = 0
+        wb = openpyxl.load_workbook("CIK.xlsx")
+        ws = wb.active
+        CIKs = []
+        for row in ws.iter_rows(values_only=True):
+            CIKs.append(row[0])
+
         with open('employee_file.csv', mode='w') as employee_file:
             employee_writer = csv.writer(employee_file, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             employee_writer.writerow(["CIK", "Filed As Of Date", "Conformed Period Of Report", "Employees"])
             l = len(os.listdir(self.input_folder))
             for p in os.listdir(self.input_folder):
-                c += 1
                 if len(self.listdir(p)) == 0:
                     continue
-                for t in (self.listdir(p)):
-                    try:
-                        self.extract(p, t, employee_writer)
-                    except Exception as e:
-                        print(e)
-                if (c % 10 == 0):
+                if int(p) in CIKs:
+                    c += 1
+                    print(p)
+                    for t in (self.listdir(p)):
+                        try:
+                            self.extract(p, t, employee_writer)
+                        except Exception as e:
+                            print(e)
+                if (c % 2 == 0):
                     print("CIK's Done: " + str(c) + "/" + str(l))
 
-    def searchstyle(self, tag):
-        import re
-        tag_style = tag.attrs.get('style')
-        return bool(re.search(r'FONT-FAMILY.*:[^:]Times New Roman*', tag_style)) if tag_style else False
+    def buildregex(self):
+        wb = openpyxl.load_workbook("Other Tittles.xlsx")
+        ws = wb.active
+        regex = "(>\s*\S*\s*employees and Office Space\s*(<BR>)?\s*(</[a-zA-Z]*>)+)|(>\s*\S*\s*employees:?\s*(<BR>)?\s*(</[a-zA-Z]*>)+)|(>\s*\S*\s*employee relations:?\s*(<BR>)?\s*(</[a-zA-Z]*>)+)"
+        used = []
+        for row in ws.iter_rows(values_only=True):
+            if row[0] in used:
+                continue
+            else:
+                used.append(row[0])
+                regex += f"|(>\s*\S*\s*{row[0]}\s*(<BR>)?\s*(</[a-zA-Z]*>)+)"
+        #regex = regex[:-1]
+        return regex
 
     def extract(self, p, t, employee_writer):
         employees = ""
@@ -71,7 +88,7 @@ class Parser:
                 for nn, nn1 in zip(n, n1):
                     file = file[nn:nn1]
                     found = False
-                    for match in (re.finditer(r"(>\s*\S*\s*employees and Office Space\s*(</[a-zA-Z]*>)+)|(>\s*\S*\s*employees:?\s*(</[a-zA-Z]*>)+)|(>\s*\S*\s*employee relations:?\s*(</[a-zA-Z]*>)+)", file, flags=re.IGNORECASE)):
+                    for match in (re.finditer(self.buildregex(), file, flags=re.IGNORECASE)):
                         if "key" in match.group().lower():
                             continue
                         n2 = match.start()
@@ -146,6 +163,7 @@ class Parser:
 
 if __name__ == '__main__':
     p = Parser(INPUT_FOLDER_NAME)
+    # p.buildregex()
     p.parse()
     # p.extract('17485', '0000950123-09-071527.txt')
     # p.extract('9892', '0001193125-09-039210.txt')
