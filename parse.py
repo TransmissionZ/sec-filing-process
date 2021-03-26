@@ -3,9 +3,6 @@ INPUT_FOLDER_NAME = "CIK/"
 
 import re
 import os
-import xml.etree.ElementTree as ET
-from lxml import etree
-from io import StringIO
 from bs4 import BeautifulSoup as soup
 import csv
 import openpyxl
@@ -46,21 +43,22 @@ class Parser:
                             self.extract(p, t, employee_writer)
                         except Exception as e:
                             print(e)
-                if (c % 2 == 0):
+                if (c % 10 == 0):
                     print("CIK's Done: " + str(c) + "/" + str(l))
 
     def buildregex(self):
         wb = openpyxl.load_workbook("Other Tittles.xlsx")
         ws = wb.active
-        regex = "(>\s*\S*\s*employees and Office Space\s*(<BR>)?\s*(</[a-zA-Z]*>)+)|(>\s*\S*\s*employees:?\s*(<BR>)?\s*(</[a-zA-Z]*>)+)|(>\s*\S*\s*employee relations:?\s*(<BR>)?\s*(</[a-zA-Z]*>)+)"
+        regex = "(>\s*\S*\s*(employees and Office Space|employees:?|employee relations:?"
         used = []
         for row in ws.iter_rows(values_only=True):
             if row[0] in used:
                 continue
             else:
                 used.append(row[0])
-                regex += f"|(>\s*\S*\s*{row[0]}\s*(<BR>)?\s*(</[a-zA-Z]*>)+)"
-        #regex = regex[:-1]
+                regex = regex + "|" +str(row[0])  #f"|(>\s*\S*\s*{row[0]}\s*(<BR>)?\s*(</[a-zA-Z]*>)+)"
+        regex += ")\s*(<BR>)?\s*(</[a-zA-Z]*>)+)"
+        # print(regex)
         return regex
 
     def extract(self, p, t, employee_writer):
@@ -117,49 +115,6 @@ class Parser:
                 employees = ""
             # print(employees)
             employee_writer.writerow([cik, faod, cpor, employees])
-            # print('\n')
-            # s = soup(file, 'lxml')
-            # ps = s.findAll('p')
-            # for idx, ptag in enumerate(ps):
-            #     if re.search(r">\s?Employees\s?<", str(ptag), flags=re.IGNORECASE):
-            #         # print(ptag)
-            #         print(idx)
-            #         break
-            # try:
-            #     print(ps[idx].text.strip())
-            #     idx += 1
-            #     c = 0
-            #     while (ps[idx].text.strip() == ""):
-            #         idx += 1
-            #
-            #         c += 1
-            #         if (c == 3):
-            #             raise Exception
-            #     print(idx)
-            #     print(ps[idx].text.strip())
-            # except Exception as e:
-            #     print("ERRORRR" + str(c))
-            #     # print(p + "/" + t)
-            #     ps = s.findAll('div')
-            #     print(len(ps))
-            #     for idx, ptag in enumerate(ps):
-            #         print(ptag)
-            #         if re.search(r">Employees<", str(ptag)):
-            #             idx2 = idx
-            #             try:
-            #                 idx2 += 1
-            #                 c = 0
-            #                 while (ps[idx2].text.strip() == ""):
-            #                     idx2 += 1
-            #                     c += 1
-            #                     if (c == 3):
-            #                         raise Exception
-            #                 if ps[idx2].text.strip() == "":
-            #                     continue
-            #
-            #             except Exception as e:
-            #                 print(p + "/" + t)
-            #                 print(e)
 
 if __name__ == '__main__':
     p = Parser(INPUT_FOLDER_NAME)
