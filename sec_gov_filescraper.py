@@ -1,9 +1,9 @@
 INPUT_TYPES = ["10-K"]
-INPUT_START_YEAR = 2009
-INPUT_END_YEAR = 2019
-INPUT_FILE = "CIK.xlsx"
+INPUT_START_YEAR = 2019
+INPUT_END_YEAR = 2020
+INPUT_FILE = "CIK2.xlsx"
 INPUT_SHEET = "Sheet1"
-INPUT_FOLDER_NAME = "CIK"
+INPUT_FOLDER_NAME = "CIK2"
 
 
 # other inputs, should be the same
@@ -14,6 +14,7 @@ INPUT_BATCH_SIZE = 20 # how many parallel downloads
 # install: requests, lxml, openpyxl
 import requests
 from lxml import html
+from bs4 import BeautifulSoup as soup
 from openpyxl import load_workbook
 import os
 import sys
@@ -157,7 +158,7 @@ class Scraper:
                 need_to_break = False
                 try:
                     r = requests.get(current_url, timeout=25)
-                    tree = html.fromstring(r.text)
+                    tree = html.fromstring(r.content)
                     listing_els = tree.xpath("//table[@class='tableFile2']/tr/td/..")
                     if len(listing_els) == 0:
                         # maybe it is invalid parameter
@@ -165,12 +166,12 @@ class Scraper:
                         if len(invalid_param_el) != 0:
                             need_to_break = True
                         else:
-                            print("Couldn't find any items at", current_url)
+                            #print("Couldn't find any items at", current_url)
                             continue
 
                     for listing_el in listing_els:
                         this_listing = {"docurl":None, "date":None, "year":None, "stamp":None, "type":None}
-                        
+
                         listing_url_el = listing_el.xpath("./td[2]/a[@href]")
                         if len(listing_url_el) != 0:
                             this_listing["docurl"] = urljoin('https://www.sec.gov/', listing_url_el[0].attrib["href"])
